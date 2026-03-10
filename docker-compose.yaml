@@ -1,0 +1,11 @@
+services:
+  server:
+    build:
+      context: ./apps/backend/
+      dockerfile: Dockerfile
+    container_name: express-backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/backend/:/apps/backend
+    restart: always
