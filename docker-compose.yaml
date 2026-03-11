@@ -20,3 +20,20 @@ services:
     volumes:
       - ./apps/frontend/:/apps/frontend
     restart: always
+
+
+  nginx:
+    container_name: node-note-nginx
+    build:
+      context: ./nginx/
+      dockerfile: Dockerfile
+    volumes:
+      - ./nginx/certs/:/etc/ssl/certs
+      - ./nginx/private/:/etc/ssl/private
+    depends_on:
+      - server
+      - client
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
