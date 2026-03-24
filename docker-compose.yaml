@@ -1,9 +1,26 @@
 services:
+  db:
+    image: postgres:13
+    container_name: postgres-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   backend:
     build:
       context: ./apps/backend/
       dockerfile: Dockerfile
     container_name: node-note-backend
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/app
     ports:
       - "3000:3000"
     volumes:
@@ -20,7 +37,8 @@ services:
     volumes:
       - ./apps/frontend/:/apps/frontend
     restart: always
-
+    depends_on:
+      - backend
 
   nginx:
     container_name: node-note-nginx
@@ -37,3 +55,6 @@ services:
       - "80:80"
       - "443:443"
     restart: always
+
+volumes:
+  postgres_data:
