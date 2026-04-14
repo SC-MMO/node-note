@@ -1,3 +1,4 @@
+// src/components/Layout/AppLayout.tsx
 import React, { useState } from "react";
 import { Layout } from "antd";
 import NotesSidebar from "../Sidebar/NotesSidebar";
@@ -6,11 +7,16 @@ import MarkdownPreview from "../Editor/MarkdownPreview";
 import RightPanel from "../RightPanel/RightPanel";
 import type { Note } from "../../types";
 import MenuIcon from "@mui/icons-material/Menu";
-import { IconButton } from "@mui/material";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { IconButton, Tooltip } from "@mui/material";
 
 const { Sider, Content } = Layout;
 
-const AppLayout: React.FC = () => {
+interface AppLayoutProps {
+  onLogout: () => void;
+}
+
+const AppLayout: React.FC<AppLayoutProps> = ({ onLogout }) => {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [editorContent, setEditorContent] = useState("");
   const [editorTitle, setEditorTitle] = useState("");
@@ -64,12 +70,19 @@ const AppLayout: React.FC = () => {
               Markdown Live Editor
             </span>
           </div>
-          <IconButton
-            onClick={() => setRightPanelOpen(!rightPanelOpen)}
-            size="small"
-          >
-            <MenuIcon sx={{ color: "#8b949e" }} />
-          </IconButton>
+          <div style={{ display: "flex", gap: 4 }}>
+            <Tooltip title="Logout">
+              <IconButton onClick={onLogout} size="small">
+                <LogoutIcon sx={{ color: "#f85149", fontSize: 20 }} />
+              </IconButton>
+            </Tooltip>
+            <IconButton
+              onClick={() => setRightPanelOpen(!rightPanelOpen)}
+              size="small"
+            >
+              <MenuIcon sx={{ color: "#8b949e" }} />
+            </IconButton>
+          </div>
         </div>
 
         <Content
