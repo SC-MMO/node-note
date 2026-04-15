@@ -1,3 +1,4 @@
+// backend/server.ts
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -18,7 +19,6 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// Mount routes under /api
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", notesRoutes);
 app.use("/api/groups", groupsRoutes);

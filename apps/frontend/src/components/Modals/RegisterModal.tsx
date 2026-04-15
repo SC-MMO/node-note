@@ -49,7 +49,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
         setLoading(true);
         try {
             const { data } = await api.post<RegisterResponse>(
-                "/api/auth/register",
+                "/auth/register",
                 { username, email, password },
             );
             localStorage.setItem("token", data.token);

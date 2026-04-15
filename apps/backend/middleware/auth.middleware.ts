@@ -1,9 +1,11 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+// backend/middleware/auth.middleware.ts
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'changeme-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || "changeme-secret-key";
 
-export interface AuthRequest extends Request {
+export interface AuthRequest<P = object, ResBody = object, ReqBody = object>
+  extends Request<P, ResBody, ReqBody> {
   userId?: number;
 }
 
@@ -11,13 +13,16 @@ interface JwtPayload {
   userId: number;
 }
 
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const authenticate = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+): void => {
   const token =
-    req.cookies?.token ||
-    req.headers.authorization?.replace('Bearer ', '');
+    req.cookies?.token || req.headers.authorization?.replace("Bearer ", "");
 
   if (!token) {
-    res.status(401).json({ error: 'Not authenticated' });
+    res.status(401).json({ error: "Not authenticated" });
     return;
   }
 
@@ -26,7 +31,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     req.userId = decoded.userId;
     next();
   } catch {
-    res.status(401).json({ error: 'Invalid token' });
+    res.status(401).json({ error: "Invalid token" });
   }
 };
 

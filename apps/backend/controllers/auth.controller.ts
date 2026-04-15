@@ -1,30 +1,63 @@
-import { Response } from "express";
-import bcrypt from "bcryptjs";
+// backend/controllers/auth.controller.ts
+import { Request, Response } from "express";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import prisma from "../lib/prisma";
 import { AuthRequest, JWT_SECRET } from "../middleware/auth.middleware";
 
+interface RegisterBody {
+  username: string;
+  email: string;
+  password: string;
+}
+
+interface LoginBody {
+  email: string;
+  password: string;
+}
+
+interface UpdateMeBody {
+  username?: string;
+  password?: string;
+}
+
+interface UpdateEmailBody {
+  email: string;
+}
+
 export const register = async (
-  req: AuthRequest,
+  req: Request<object, object, RegisterBody>,
   res: Response,
 ): Promise<void> => {
+  console.log("=== REGISTER HIT ===");
   try {
-    const { username, email, password } = req.body as {
-      username: string;
-      email: string;
-      password: string;
-    };
+    const { username, email, password } = req.body;
 
+    console.log("Parsed:", { username, email, password: "***" });
+
+    if (!username || !email || !password) {
+      res
+        .status(400)
+        .json({ error: "Username, email, and password are required" });
+      return;
+    }
+
+    console.log("Checking existing user...");
     const existing = await prisma.user.findUnique({ where: { email } });
+
     if (existing) {
       res.status(400).json({ error: "Email already in use" });
       return;
     }
 
+    console.log("Hashing password...");
     const hashed = await bcrypt.hash(password, 10);
+
+    console.log("Creating user...");
     const user = await prisma.user.create({
       data: { username, email, password: hashed },
     });
+    console.log("User created:", user.userId);
 
     const token = jwt.sign({ userId: user.userId }, JWT_SECRET, {
       expiresIn: "7d",
@@ -42,13 +75,25 @@ export const register = async (
       token,
     });
   } catch (err) {
-    res.status(500).json({ error: "Registration failed" });
+    console.error("=== REGISTER ERROR ===");
+    console.error(err);
+    res
+      .status(500)
+      .json({ error: "Registration failed", details: String(err) });
   }
 };
 
-export const login = async (req: AuthRequest, res: Response): Promise<void> => {
+export const login = async (
+  req: Request<object, object, LoginBody>,
+  res: Response,
+): Promise<void> => {
   try {
-    const { email, password } = req.body as { email: string; password: string };
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      res.status(400).json({ error: "Email and password are required" });
+      return;
+    }
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
@@ -78,7 +123,8 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
       token,
     });
   } catch (err) {
-    res.status(500).json({ error: "Login failed" });
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Login failed", details: String(err) });
   }
 };
 
@@ -96,19 +142,17 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
 
     res.json(user);
   } catch (err) {
+    console.error("GetMe error:", err);
     res.status(500).json({ error: "Failed to fetch user" });
   }
 };
 
 export const updateMe = async (
-  req: AuthRequest,
+  req: AuthRequest<object, object, UpdateMeBody>,
   res: Response,
 ): Promise<void> => {
   try {
-    const { username, password } = req.body as {
-      username?: string;
-      password?: string;
-    };
+    const { username, password } = req.body;
 
     const data: { username?: string; password?: string } = {};
     if (username) data.username = username;
@@ -122,16 +166,17 @@ export const updateMe = async (
 
     res.json(user);
   } catch (err) {
+    console.error("UpdateMe error:", err);
     res.status(500).json({ error: "Update failed" });
   }
 };
 
 export const updateEmail = async (
-  req: AuthRequest,
+  req: AuthRequest<object, object, UpdateEmailBody>,
   res: Response,
 ): Promise<void> => {
   try {
-    const { email } = req.body as { email: string };
+    const { email } = req.body;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing && existing.userId !== req.userId) {
@@ -147,6 +192,7 @@ export const updateEmail = async (
 
     res.json(user);
   } catch (err) {
+    console.error("UpdateEmail error:", err);
     res.status(500).json({ error: "Email update failed" });
   }
 };
@@ -170,6 +216,7 @@ export const deleteMe = async (
     res.clearCookie("token");
     res.json({ message: "Account deleted" });
   } catch (err) {
+    console.error("DeleteMe error:", err);
     res.status(500).json({ error: "Delete failed" });
   }
 };

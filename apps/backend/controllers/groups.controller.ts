@@ -1,6 +1,21 @@
+// backend/controllers/groups.controller.ts
 import { Response } from "express";
 import prisma from "../lib/prisma";
 import { AuthRequest } from "../middleware/auth.middleware";
+
+interface InviteBody {
+  email: string;
+}
+
+interface GroupWithOwner {
+  groupId: number;
+  ownerId: number;
+  owner?: {
+    userId: number;
+    username: string;
+    email: string;
+  };
+}
 
 export const getMyGroups = async (
   req: AuthRequest,
@@ -25,14 +40,17 @@ export const getMyGroups = async (
       },
     });
 
-    const memberGroups = memberships.map((m) => m.group);
-    const allGroups = [...owned, ...memberGroups];
+    const memberGroups = memberships.map(
+      (m: { group: GroupWithOwner }) => m.group,
+    );
+    const allGroups: GroupWithOwner[] = [...owned, ...memberGroups];
     const unique = Array.from(
-      new Map(allGroups.map((g) => [g.groupId, g])).values(),
+      new Map(allGroups.map((g: GroupWithOwner) => [g.groupId, g])).values(),
     );
 
     res.json(unique);
   } catch (err) {
+    console.error("getMyGroups error:", err);
     res.status(500).json({ error: "Failed to fetch groups" });
   }
 };
@@ -62,17 +80,17 @@ export const searchGroups = async (
 
     res.json(groups);
   } catch (err) {
+    console.error("searchGroups error:", err);
     res.status(500).json({ error: "Search failed" });
   }
 };
 
 export const getGroupMembers = async (
-  req: AuthRequest,
+  req: AuthRequest<{ id: string }>,
   res: Response,
 ): Promise<void> => {
   try {
-    const rawId = req.params.id;
-    const groupId = parseInt(Array.isArray(rawId) ? rawId[0] : rawId);
+    const groupId = parseInt(req.params.id);
 
     const members = await prisma.groupMembership.findMany({
       where: { groupId },
@@ -83,6 +101,7 @@ export const getGroupMembers = async (
 
     res.json(members);
   } catch (err) {
+    console.error("getGroupMembers error:", err);
     res.status(500).json({ error: "Failed to fetch members" });
   }
 };
@@ -105,17 +124,17 @@ export const createGroup = async (
 
     res.status(201).json(group);
   } catch (err) {
+    console.error("createGroup error:", err);
     res.status(500).json({ error: "Failed to create group" });
   }
 };
 
 export const deleteGroup = async (
-  req: AuthRequest,
+  req: AuthRequest<{ id: string }>,
   res: Response,
 ): Promise<void> => {
   try {
-    const rawId = req.params.id;
-    const groupId = parseInt(Array.isArray(rawId) ? rawId[0] : rawId);
+    const groupId = parseInt(req.params.id);
 
     const group = await prisma.group.findUnique({ where: { groupId } });
     if (!group || group.ownerId !== req.userId) {
@@ -131,19 +150,18 @@ export const deleteGroup = async (
 
     res.json({ message: "Group deleted" });
   } catch (err) {
+    console.error("deleteGroup error:", err);
     res.status(500).json({ error: "Failed to delete group" });
   }
 };
 
 export const inviteUser = async (
-  req: AuthRequest,
+  req: AuthRequest<{ id: string }, object, InviteBody>,
   res: Response,
 ): Promise<void> => {
   try {
-    const rawId = req.params.id;
-    const groupId = parseInt(Array.isArray(rawId) ? rawId[0] : rawId);
-
-    const { email } = req.body as { email: string };
+    const groupId = parseInt(req.params.id);
+    const { email } = req.body;
 
     const group = await prisma.group.findUnique({ where: { groupId } });
     if (!group || group.ownerId !== req.userId) {
@@ -171,20 +189,18 @@ export const inviteUser = async (
 
     res.json({ message: "User invited" });
   } catch (err) {
+    console.error("inviteUser error:", err);
     res.status(500).json({ error: "Failed to invite user" });
   }
 };
 
 export const removeMember = async (
-  req: AuthRequest,
+  req: AuthRequest<{ id: string; userId: string }>,
   res: Response,
 ): Promise<void> => {
   try {
-    let rawId = req.params.id;
-    const groupId = parseInt(Array.isArray(rawId) ? rawId[0] : rawId);
-
-    rawId = req.params.userId;
-    const userId = parseInt(Array.isArray(rawId) ? rawId[0] : rawId);
+    const groupId = parseInt(req.params.id);
+    const userId = parseInt(req.params.userId);
 
     const group = await prisma.group.findUnique({ where: { groupId } });
     if (!group || group.ownerId !== req.userId) {
@@ -203,6 +219,7 @@ export const removeMember = async (
 
     res.json({ message: "Member removed" });
   } catch (err) {
+    console.error("removeMember error:", err);
     res.status(500).json({ error: "Failed to remove member" });
   }
 };
