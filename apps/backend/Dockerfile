@@ -1,17 +1,20 @@
 FROM node:24-alpine
 
-WORKDIR /apps/backend
+WORKDIR /app
 
+# install pnpm
+RUN npm install -g pnpm
+
+# copy only backend deps first (better caching)
 COPY package.json pnpm-lock.yaml ./
 
-RUN npm install -g pnpm && pnpm install
+# install deps
+RUN pnpm install
 
+# copy rest of backend
 COPY . .
 
-# ✅ Use pnpm (correct)
-RUN pnpm prisma generate
+# generate prisma client at build time (IMPORTANT)
+RUN npx prisma generate
 
-EXPOSE 3000
-
-# ✅ separate commands with &&
-CMD sh -c "pnpm prisma migrate deploy && pnpm prisma generate && pnpm run dev"
+CMD ["pnpm", "run", "dev"]
