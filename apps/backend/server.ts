@@ -8,7 +8,7 @@ import groupsRoutes from "./routes/groups.routes";
 import usersRoutes from "./routes/users.routes";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(
   cors({
