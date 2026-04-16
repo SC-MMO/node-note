@@ -1,11 +1,20 @@
 FROM node:24-alpine
 
-WORKDIR /apps/backend/
+WORKDIR /app
+
+RUN corepack enable
 
 COPY package.json pnpm-lock.yaml ./
 
-RUN npm install -g pnpm && pnpm install
+RUN pnpm install
 
-COPY . /backend
+COPY . .
 
-CMD ["pnpm", "run", "dev"]
+RUN npx prisma generate
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+RUN apk add --no-cache postgresql-client
+
+CMD ["/entrypoint.sh"]

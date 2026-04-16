@@ -1,35 +1,114 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
+// src/App.tsx
+import React, { useState, useCallback } from "react";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { ConfigProvider, theme } from "antd";
+import EditorPage from "./pages/EditorPage";
+import LoginModal from "./components/Modals/LoginModal";
+import RegisterModal from "./components/Modals/RegisterModal";
 
-function App() {
-  const [count, setCount] = useState(0);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30000,
+      retry: 1,
+    },
+  },
+});
+
+type AuthModal = "login" | "register" | null;
+
+const AppContent: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => !!localStorage.getItem("token"),
+  );
+  const [authModal, setAuthModal] = useState<AuthModal>(() =>
+    localStorage.getItem("token") ? null : "login",
+  );
+  const qc = useQueryClient();
+
+  const handleAuthSuccess = useCallback(() => {
+    setIsAuthenticated(true);
+    setAuthModal(null);
+    qc.invalidateQueries({ queryKey: ["currentUser"] });
+    qc.invalidateQueries({ queryKey: ["myNotes"] });
+  }, [qc]);
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("token");
+    setIsAuthenticated(false);
+    setAuthModal("login");
+    qc.clear();
+  }, [qc]);
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      {isAuthenticated ? (
+        <EditorPage onLogout={handleLogout} />
+      ) : (
+        <div
+          style={{
+            height: "100vh",
+            background: "#0d1117",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div style={{ textAlign: "center" }}>
+            <h1 style={{ color: "#58a6ff", fontSize: 36, marginBottom: 8 }}>
+              MarkLiveEdit
+            </h1>
+            <p style={{ color: "#8b949e" }}>Please sign in to continue</p>
+          </div>
+        </div>
+      )}
+
+      <LoginModal
+        open={authModal === "login"}
+        onClose={() => {
+          if (isAuthenticated) setAuthModal(null);
+        }}
+        onSwitchToRegister={() => setAuthModal("register")}
+        onSuccess={handleAuthSuccess}
+      />
+
+      <RegisterModal
+        open={authModal === "register"}
+        onClose={() => {
+          if (isAuthenticated) setAuthModal(null);
+        }}
+        onSwitchToLogin={() => setAuthModal("login")}
+        onSuccess={handleAuthSuccess}
+      />
     </>
   );
-}
+};
+
+const App: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ConfigProvider
+        theme={{
+          algorithm: theme.darkAlgorithm,
+          token: {
+            colorPrimary: "#58a6ff",
+            colorBgContainer: "#161b22",
+            colorBgElevated: "#161b22",
+            colorBorder: "#30363d",
+            colorText: "#e6edf3",
+            colorTextSecondary: "#8b949e",
+            borderRadius: 8,
+          },
+        }}
+      >
+        <AppContent />
+      </ConfigProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

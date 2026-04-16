@@ -5,6 +5,10 @@ npm-shrinkwrap.json
 *.log
 *.gz
 
+# store
+# pnpm store
+.pnpm-store/
+
 # Yarn
 yarn-error.log
 yarn.lock

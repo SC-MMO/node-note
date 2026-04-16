@@ -1,11 +1,10 @@
-FROM node:24-alpine
+FROM node:20-alpine
 
-WORKDIR /apps/frontend
+WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
+RUN corepack enable && pnpm install
 
-RUN npm install -g pnpm && pnpm install
+COPY . .
 
-COPY . /frontend
-
-CMD ["pnpm", "run", "dev"]
+CMD ["pnpm", "dev"]
