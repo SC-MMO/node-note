@@ -64,7 +64,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ onLogout }) => {
         >
           <div>
             <span style={{ color: "#58a6ff", fontWeight: 700, fontSize: 18 }}>
-              MarkLiveEdit
+              NodeNote
             </span>
             <span style={{ color: "#8b949e", marginLeft: 8, fontSize: 12 }}>
               Markdown Live Editor

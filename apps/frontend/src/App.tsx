@@ -60,7 +60,7 @@ const AppContent: React.FC = () => {
         >
           <div style={{ textAlign: "center" }}>
             <h1 style={{ color: "#58a6ff", fontSize: 36, marginBottom: 8 }}>
-              MarkLiveEdit
+              NodeNote
             </h1>
             <p style={{ color: "#8b949e" }}>Please sign in to continue</p>
           </div>
