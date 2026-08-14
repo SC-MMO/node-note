@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  userId       Int               @id @default(autoincrement())
+  username     String
+  email        String            @unique
+  password     String
+  notes        Note[]
+  ownedGroups  Group[]
+  memberships  GroupMembership[]
+  userAccesses UserAccess[]
+}
+
+model Note {
+  noteId        Int           @id @default(autoincrement())
+  title         String
+  content       String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  authorId      Int
+  author        User          @relation(fields: [authorId], references: [userId])
+  groupAccesses GroupAccess[]
+  userAccesses  UserAccess[]
+}
+
+model Group {
+  groupId     Int               @id @default(autoincrement())
+  ownerId     Int
+  owner       User              @relation(fields: [ownerId], references: [userId])
+  memberships GroupMembership[]
+  accesses    GroupAccess[]
+}
+
+model GroupMembership {
+  userId  Int
+  groupId Int
+  user    User  @relation(fields: [userId], references: [userId])
+  group   Group @relation(fields: [groupId], references: [groupId])
+
+  @@id([userId, groupId])
+}
+
+model UserAccess {
+  userId Int
+  noteId Int
+  user   User @relation(fields: [userId], references: [userId])
+  note   Note @relation(fields: [noteId], references: [noteId])
+
+  @@id([userId, noteId])
+}
+
+model GroupAccess {
+  groupId Int
+  noteId  Int
+  group   Group @relation(fields: [groupId], references: [groupId])
+  note    Note  @relation(fields: [noteId], references: [noteId])
+
+  @@id([groupId, noteId])
+}
